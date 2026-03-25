@@ -9,626 +9,600 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
+    --wave-header: 0px;
     --bg:          #0a0a12;
-    --card-bg:     #1a1a2e;
-    --card-border: #2a2a45;
-    --text:        #e2e8f0;
-    --muted:       #64748b;
+    --surface:     #111124;
+    --card-bg:     #16162e;
+    --card-border: #232345;
+    --card-hover:  #1e1e3a;
+    --text:        #c8ccd4;
+    --text-bright: #e8ecf4;
+    --muted:       #5a6077;
     --cyan:        #06b6d4;
     --green:       #10b981;
-    --yellow:      #f59e0b;
+    --yellow:      #eab308;
     --red:         #ef4444;
     --purple:      #8b5cf6;
-    --bar-bg:      #0f172a;
+    --bar-bg:      #0d0d1a;
+    --radius:      6px;
   }
+
+  html, body { height: 100%; overflow: hidden; }
 
   body {
     background: var(--bg);
     color: var(--text);
     font-family: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace;
-    font-size: 13px;
-    min-height: 100vh;
+    font-size: 12px;
+    line-height: 1.4;
+    display: flex;
+    flex-direction: column;
+    padding-top: var(--wave-header);
   }
 
-  header {
+  /* ── Header bar ─────────────────────────────────────── */
+  .bar {
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 20px;
+    padding: 6px 12px;
+    background: var(--surface);
     border-bottom: 1px solid var(--card-border);
-    background: rgba(26,26,46,0.8);
-    backdrop-filter: blur(6px);
-    position: sticky;
-    top: 0;
+    gap: 12px;
     z-index: 10;
   }
 
-  header h1 {
-    font-size: 14px;
+  .bar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .bar h1 {
+    font-size: 11px;
     font-weight: 600;
     color: var(--cyan);
-    letter-spacing: 0.08em;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
   }
 
-  .header-stats {
+  .bar-right {
     display: flex;
     align-items: center;
-    gap: 16px;
-    font-size: 12px;
-    color: var(--muted);
-  }
-
-  .stat-badge { display: flex; align-items: center; gap: 4px; }
-  .dot { width: 8px; height: 8px; border-radius: 50%; }
-  .dot-green  { background: var(--green); box-shadow: 0 0 6px var(--green); }
-  .dot-red    { background: var(--red);   box-shadow: 0 0 6px var(--red); }
-
-  .ws-indicator {
+    gap: 10px;
     font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 3px;
-    background: #0f172a;
-    border: 1px solid var(--card-border);
   }
-  .ws-connected    { color: var(--green);  border-color: var(--green); }
-  .ws-disconnected { color: var(--red);    border-color: var(--red); }
-  .ws-connecting   { color: var(--yellow); border-color: var(--yellow); }
 
-  #last-updated { color: var(--muted); font-size: 11px; }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    background: var(--bar-bg);
+    border: 1px solid var(--card-border);
+    font-size: 10px;
+    font-variant-numeric: tabular-nums;
+  }
 
-  main { padding: 16px 20px; }
+  .chip-green { color: var(--green); border-color: rgba(16,185,129,0.3); }
+  .chip-red   { color: var(--red);   border-color: rgba(239,68,68,0.3); }
+  .chip-ws    { color: var(--muted); }
+  .chip-ws.live { color: var(--green); border-color: rgba(16,185,129,0.3); }
+  .chip-ws.dead { color: var(--red);   border-color: rgba(239,68,68,0.3); }
+
+  .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+  .dot-g { background: var(--green); }
+  .dot-r { background: var(--red); }
+
+  .ts { color: var(--muted); font-size: 10px; }
+
+  /* ── Grid ────────────────────────────────────────────── */
+  .grid-wrap {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 10px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--card-border) transparent;
+  }
 
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 10px;
   }
 
+  /* ── Card ────────────────────────────────────────────── */
   .card {
     background: var(--card-bg);
     border: 1px solid var(--card-border);
-    border-radius: 8px;
-    padding: 14px;
-    transition: border-color 0.2s, transform 0.15s;
-    cursor: pointer;
+    border-radius: var(--radius);
+    padding: 10px 12px;
     position: relative;
+    transition: border-color 0.15s, background 0.15s;
+    cursor: default;
     overflow: hidden;
   }
-  .card:hover { border-color: var(--cyan); transform: translateY(-1px); }
-  .card.offline { opacity: 0.55; }
+  .card:hover { background: var(--card-hover); border-color: var(--cyan); }
+  .card.offline { opacity: 0.5; }
   .card.offline:hover { border-color: var(--red); }
-  .card::before {
-    content: '';
+
+  .card-accent {
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 2px;
-    background: var(--card-accent, var(--cyan));
+    transition: background 0.3s;
   }
 
-  .card-header {
+  .card-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
   }
 
-  .machine-name {
+  .card-name {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text);
-  }
-
-  .status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-  .status-ok       { background: var(--green);  box-shadow: 0 0 8px var(--green); }
-  .status-warning  { background: var(--yellow); box-shadow: 0 0 8px var(--yellow); }
-  .status-critical { background: var(--red);    box-shadow: 0 0 8px var(--red); animation: pulse-red 1s infinite; }
-  .status-unknown  { background: var(--muted); }
-
-  @keyframes pulse-red {
-    0%, 100% { opacity: 1; }
-    50%       { opacity: 0.4; }
-  }
-
-  .machine-type-badge {
-    font-size: 10px;
-    padding: 1px 6px;
-    border-radius: 3px;
-    background: #0f172a;
-    color: var(--muted);
-    border: 1px solid var(--card-border);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
-
-  .metrics { display: flex; flex-direction: column; gap: 6px; }
-
-  .metric-row {
-    display: grid;
-    grid-template-columns: 36px 1fr 46px;
-    align-items: center;
     gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-bright);
+  }
+
+  .s-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    flex-shrink: 0;
+    transition: background 0.3s, box-shadow 0.3s;
+  }
+  .s-ok   { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .s-warn { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); }
+  .s-crit { background: var(--red); box-shadow: 0 0 6px var(--red); animation: pulse 1.5s infinite; }
+  .s-unk  { background: var(--muted); }
+
+  @keyframes pulse {
+    0%,100% { opacity: 1; }
+    50%     { opacity: 0.3; }
+  }
+
+  .type-tag {
+    font-size: 9px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: var(--bar-bg);
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── Metrics ─────────────────────────────────────────── */
+  .metrics { display: flex; flex-direction: column; gap: 5px; }
+
+  .m-row {
+    display: grid;
+    grid-template-columns: 32px 1fr 42px;
+    align-items: center;
+    gap: 5px;
     font-size: 11px;
   }
-  .metric-label { color: var(--muted); }
-  .metric-value { text-align: right; font-variant-numeric: tabular-nums; }
+  .m-lbl { color: var(--muted); font-size: 10px; }
+  .m-val { text-align: right; font-variant-numeric: tabular-nums; color: var(--text-bright); }
 
-  .bar-track {
-    height: 6px;
+  .bar-t {
+    height: 5px;
     background: var(--bar-bg);
     border-radius: 3px;
     overflow: hidden;
   }
-  .bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
-  .bar-ok       { background: var(--green); }
-  .bar-warning  { background: var(--yellow); }
-  .bar-critical { background: var(--red); }
+  .bar-f {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.6s ease, background 0.3s;
+  }
+  .b-ok   { background: var(--green); }
+  .b-warn { background: var(--yellow); }
+  .b-crit { background: var(--red); }
 
-  .sparkline-wrap { margin-top: 8px; height: 40px; position: relative; }
-  .sparkline-wrap canvas { width: 100% !important; height: 40px !important; }
+  /* ── Sparkline ───────────────────────────────────────── */
+  .spark { height: 32px; margin-top: 6px; }
+  .spark canvas { width: 100% !important; height: 32px !important; }
 
-  .gpu-section {
-    margin-top: 8px;
-    padding-top: 8px;
+  /* ── GPU section ─────────────────────────────────────── */
+  .gpu-sec {
+    margin-top: 6px;
+    padding-top: 6px;
     border-top: 1px solid var(--card-border);
   }
-  .gpu-label {
-    font-size: 10px;
+  .gpu-tag {
+    font-size: 9px;
     color: var(--purple);
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
   }
 
-  .card-footer {
+  /* ── Footer ──────────────────────────────────────────── */
+  .card-foot {
     display: flex;
-    justify-content: space-between;
-    margin-top: 10px;
-    padding-top: 8px;
-    border-top: 1px solid var(--card-border);
-    font-size: 11px;
-    color: var(--muted);
     flex-wrap: wrap;
-    gap: 4px;
+    gap: 8px;
+    margin-top: 6px;
+    padding-top: 5px;
+    border-top: 1px solid var(--card-border);
+    font-size: 10px;
+    color: var(--muted);
   }
-  .footer-item { display: flex; align-items: center; gap: 4px; }
-  .footer-val  { color: var(--text); }
+  .foot-v { color: var(--text); }
 
-  .offline-msg { text-align: center; padding: 10px 0 4px; color: var(--red); font-size: 12px; }
-  .last-seen   { text-align: center; color: var(--muted); font-size: 11px; margin-top: 2px; }
+  /* ── Offline ─────────────────────────────────────────── */
+  .off-msg { text-align: center; padding: 8px 0; color: var(--red); font-size: 11px; }
+  .off-ts  { text-align: center; color: var(--muted); font-size: 10px; }
 
-  .copy-flash {
+  /* ── SSH tooltip ─────────────────────────────────────── */
+  .ssh-tip {
     position: absolute;
-    inset: 0;
-    background: rgba(6,182,212,0.08);
-    border-radius: 8px;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-  .copy-flash.show { opacity: 1; }
-
-  .ssh-tooltip {
-    position: absolute;
-    bottom: 6px;
-    left: 50%;
+    bottom: 4px; left: 50%;
     transform: translateX(-50%);
-    background: #0f172a;
+    background: var(--bar-bg);
     border: 1px solid var(--cyan);
     color: var(--cyan);
-    font-size: 11px;
-    padding: 3px 10px;
-    border-radius: 4px;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 3px;
     white-space: nowrap;
     pointer-events: none;
     opacity: 0;
-    transition: opacity 0.15s;
-    z-index: 5;
+    transition: opacity 0.12s;
   }
-  .card:hover .ssh-tooltip { opacity: 1; }
+  .card:hover .ssh-tip { opacity: 0.9; }
 
-  @keyframes flash-update {
-    0%   { background: rgba(6,182,212,0.12); }
-    100% { background: var(--card-bg); }
+  /* ── Placeholder ─────────────────────────────────────── */
+  .ph {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: var(--muted);
+    padding: 30px 0;
+    font-size: 11px;
   }
-  .card.updated { animation: flash-update 0.5s ease-out; }
+  .ph::before { content: '◇ '; color: var(--cyan); }
+
+  /* ── Focus ring (tab-in-focus indicator) ─────────────── */
+  .focused-ring {
+    display: none;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 4px var(--cyan);
+    animation: breathe 2s infinite;
+  }
+  .tab-focused .focused-ring { display: inline-block; }
+  @keyframes breathe { 0%,100%{opacity:1} 50%{opacity:0.4} }
 </style>
 </head>
 <body>
 
-<header>
-  <h1>&#9670; Infrastructure Dashboard</h1>
-  <div class="header-stats">
-    <div class="stat-badge">
-      <div class="dot dot-green"></div>
-      <span id="count-online">0</span>&nbsp;online
-    </div>
-    <div class="stat-badge">
-      <div class="dot dot-red"></div>
-      <span id="count-offline">0</span>&nbsp;offline
-    </div>
-    <div id="last-updated">--</div>
-    <div id="ws-status" class="ws-indicator ws-connecting">WS connecting...</div>
+<div class="bar">
+  <div class="bar-left">
+    <h1>infra</h1>
+    <span class="focused-ring" title="Real-time (tab focused)"></span>
   </div>
-</header>
+  <div class="bar-right">
+    <span class="chip chip-green"><span class="dot dot-g"></span> <span id="n-on">0</span></span>
+    <span class="chip chip-red"><span class="dot dot-r"></span> <span id="n-off">0</span></span>
+    <span class="chip chip-ws" id="ws-chip">connecting</span>
+    <span class="ts" id="ts">--</span>
+  </div>
+</div>
 
-<main>
-  <div class="grid" id="grid">
-    <div id="placeholder" style="color:var(--muted);padding:40px 0;text-align:center;grid-column:1/-1">
-      Connecting to dashboard server...
-    </div>
+<div class="grid-wrap">
+  <div class="grid" id="g">
+    <div class="ph" id="ph">Connecting to backend...</div>
   </div>
-</main>
+</div>
 
 <script>
-// ── Helpers ───────────────────────────────────────────────────────────────
-function esc(s) {
-  // Escape text for safe textContent assignment — not needed for textContent
-  // but kept as a guard when we must use createTextNode
-  return String(s == null ? '' : s);
-}
+// ── Utilities ────────────────────────────────────────────
+const $ = s => document.getElementById(s);
+const el = (t,c) => { const e = document.createElement(t); if(c) e.className=c; return e; };
 
-function el(tag, cls) {
-  const e = document.createElement(tag);
-  if (cls) e.className = cls;
-  return e;
+function fmtB(b) {
+  if(!b) return '0B';
+  const u=['B','K','M','G','T']; let v=b, i=0;
+  while(v>=1024&&i<u.length-1){v/=1024;i++}
+  return i===0?b+'B':v.toFixed(1)+u[i];
 }
-
-function txt(content) {
-  return document.createTextNode(String(content == null ? '' : content));
+function fmtUp(s) {
+  if(!s||s<=0) return '-';
+  const d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60);
+  return d>0?d+'d '+h+'h':h>0?h+'h '+m+'m':m+'m';
 }
-
-function fmtBytes(b) {
-  if (!b) return '0B';
-  const units = ['B','K','M','G','T'];
-  let v = b, i = 0;
-  while (v >= 1024 && i < units.length - 1) { v /= 1024; i++; }
-  return i === 0 ? b + 'B' : v.toFixed(1) + units[i];
+function fmtAgo(iso) {
+  if(!iso) return '?';
+  const d=Math.floor((Date.now()-new Date(iso).getTime())/1000);
+  return d<60?d+'s ago':d<3600?Math.floor(d/60)+'m ago':Math.floor(d/3600)+'h ago';
 }
-
-function fmtUptime(sec) {
-  if (!sec || sec <= 0) return '?';
-  const d = Math.floor(sec / 86400);
-  const h = Math.floor((sec % 86400) / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  if (d > 0) return d + 'd ' + h + 'h';
-  if (h > 0) return h + 'h ' + m + 'm';
-  return m + 'm';
-}
-
-function fmtAgo(isoStr) {
-  if (!isoStr) return '?';
-  const diff = Math.floor((Date.now() - new Date(isoStr).getTime()) / 1000);
-  if (diff < 60)   return diff + 's ago';
-  if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
-  return Math.floor(diff / 3600) + 'h ago';
-}
-
-function barClass(pct) {
-  if (pct >= 95) return 'bar-critical';
-  if (pct >= 80) return 'bar-warning';
-  return 'bar-ok';
-}
-
-function statusClass(s) {
-  return ['status-ok','status-warning','status-critical','status-unknown'][s] || 'status-unknown';
-}
-
-function accentColor(s) {
-  return ['var(--green)','var(--yellow)','var(--red)','var(--muted)'][s] || 'var(--muted)';
-}
-
-function typeIcon(t) {
-  if (t === 'linux')    return '\u{1F5A5}';  // desktop computer
-  if (t === 'windows')  return '\u{1F4BB}';  // laptop
-  if (t === 'mikrotik') return '\u{1F50C}';  // plug (closest to router)
-  return '\u{1F4BB}';
-}
-
+function bCls(p) { return p>=95?'b-crit':p>=80?'b-warn':'b-ok'; }
+function sCls(s) { return ['s-ok','s-warn','s-crit','s-unk'][s]||'s-unk'; }
+function aCl(s)  { return ['var(--green)','var(--yellow)','var(--red)','var(--muted)'][s]||'var(--muted)'; }
 function sshCmd(m) {
-  if (m.Type === 'windows') return null;
-  const port = (m.Port && m.Port !== 22) ? ' -p ' + m.Port : '';
-  return 'ssh ' + m.User + '@' + m.Host + port;
+  if(m.Type==='windows') return null;
+  return 'ssh '+(m.Port&&m.Port!==22?'-p '+m.Port+' ':'')+m.User+'@'+m.Host;
 }
+function cid(name) { return 'c-'+name.replace(/[^a-zA-Z0-9]/g,'_'); }
 
-// ── State ─────────────────────────────────────────────────────────────────
-const history = {};   // name -> { cpu: [], mem: [] }
-const charts  = {};   // name -> Chart
-const MAX_H   = 8;
+// ── State ────────────────────────────────────────────────
+const hist={}, charts={};
+const MAX_H = 12;
+let tabFocused = !document.hidden;
 
-// ── WebSocket ─────────────────────────────────────────────────────────────
-let ws = null;
-let reconnectDelay = 1000;
+// ── Focus tracking ───────────────────────────────────────
+document.addEventListener('visibilitychange', () => {
+  tabFocused = !document.hidden;
+  document.body.classList.toggle('tab-focused', tabFocused);
+  if(tabFocused && ws && ws.readyState===1) {
+    // Request immediate refresh when tab comes into focus
+    ws.send('refresh');
+  }
+});
+document.body.classList.toggle('tab-focused', tabFocused);
+
+// ── WebSocket ────────────────────────────────────────────
+let ws=null, rDelay=1000;
+const wsChip=$('ws-chip');
 
 function connect() {
-  const wsEl = document.getElementById('ws-status');
-  wsEl.textContent = 'WS connecting...';
-  wsEl.className = 'ws-indicator ws-connecting';
+  wsChip.textContent='connecting';
+  wsChip.className='chip chip-ws';
+  ws=new WebSocket('ws://'+location.host+'/ws');
 
-  ws = new WebSocket('ws://' + location.host + '/ws');
-
-  ws.onopen = () => {
-    reconnectDelay = 1000;
-    wsEl.textContent = 'WS live';
-    wsEl.className = 'ws-indicator ws-connected';
+  ws.onopen=()=>{
+    rDelay=1000;
+    wsChip.textContent='live';
+    wsChip.className='chip chip-ws live';
   };
-
-  ws.onmessage = (evt) => {
+  ws.onmessage=e=>{
     try {
-      const payload = JSON.parse(evt.data);
-      if (payload.type === 'machines') handleUpdate(payload.data);
-    } catch (e) { /* ignore */ }
+      const p=JSON.parse(e.data);
+      if(p.type==='machines') render(p.data);
+    } catch(_){}
   };
-
-  ws.onclose = () => {
-    wsEl.textContent = 'WS offline';
-    wsEl.className = 'ws-indicator ws-disconnected';
-    setTimeout(connect, reconnectDelay);
-    reconnectDelay = Math.min(reconnectDelay * 2, 30000);
+  ws.onclose=()=>{
+    wsChip.textContent='offline';
+    wsChip.className='chip chip-ws dead';
+    setTimeout(connect, rDelay);
+    rDelay=Math.min(rDelay*2, 30000);
   };
-
-  ws.onerror = () => ws.close();
+  ws.onerror=()=>ws.close();
 }
 
-// ── Update handler ────────────────────────────────────────────────────────
-function handleUpdate(machines) {
-  let online = 0, offline = 0;
-
-  // Remove placeholder on first data
-  const ph = document.getElementById('placeholder');
-  if (ph) ph.remove();
+// ── Render (in-place update, no DOM rebuild) ─────────────
+function render(machines) {
+  const ph=$('ph'); if(ph) ph.remove();
+  let on=0, off=0;
 
   machines.forEach(m => {
-    const isOffline = m.Status === 3 || (m.LastError && !m.CPU && !m.MemoryPercent);
-    if (isOffline) offline++; else online++;
+    const isOff = m.Status===3||(m.LastError&&!m.CPU&&!m.MemoryPercent);
+    isOff ? off++ : on++;
 
-    if (!history[m.Name]) history[m.Name] = { cpu: [], mem: [] };
-    const h = history[m.Name];
-    h.cpu.push(m.CPU || 0);
-    h.mem.push(m.MemoryPercent || 0);
-    if (h.cpu.length > MAX_H) h.cpu.shift();
-    if (h.mem.length > MAX_H) h.mem.shift();
+    // Track history
+    if(!hist[m.Name]) hist[m.Name]={cpu:[],mem:[]};
+    const h=hist[m.Name];
+    h.cpu.push(m.CPU||0); h.mem.push(m.MemoryPercent||0);
+    if(h.cpu.length>MAX_H) h.cpu.shift();
+    if(h.mem.length>MAX_H) h.mem.shift();
 
-    renderCard(m);
+    const id=cid(m.Name);
+    const existing=document.getElementById(id);
+
+    if(existing) {
+      updateCard(existing, m, isOff);
+    } else {
+      $('g').appendChild(buildCard(m, isOff));
+    }
   });
 
-  document.getElementById('count-online').textContent = online;
-  document.getElementById('count-offline').textContent = offline;
-  document.getElementById('last-updated').textContent =
-    'Updated ' + new Date().toLocaleTimeString();
+  $('n-on').textContent=on;
+  $('n-off').textContent=off;
+  $('ts').textContent=new Date().toLocaleTimeString();
 }
 
-// ── DOM card builder (no innerHTML on untrusted data) ─────────────────────
-function makeMetricRow(label, pct, valueStr) {
-  const row = el('div', 'metric-row');
+// ── In-place card update (no rebuild) ────────────────────
+function updateCard(card, m, isOff) {
+  const status=m.Status!=null?m.Status:3;
+  card.className='card'+(isOff?' offline':'');
 
-  const lbl = el('div', 'metric-label');
-  lbl.textContent = label;
+  // Accent bar
+  const accent=card.querySelector('.card-accent');
+  if(accent) accent.style.background=aCl(status);
 
-  const track = el('div', 'bar-track');
-  const fill  = el('div', 'bar-fill ' + barClass(pct || 0));
-  fill.style.width = Math.min(100, pct || 0).toFixed(1) + '%';
-  track.appendChild(fill);
+  // Status dot
+  const dot=card.querySelector('.s-dot');
+  if(dot) dot.className='s-dot '+sCls(status);
 
-  const val = el('div', 'metric-value');
-  val.textContent = valueStr;
+  // Metrics (update values + bar widths in place)
+  const rows=card.querySelectorAll('.m-row');
+  if(!isOff) {
+    updateMetricRow(rows[0], m.CPU);
+    updateMetricRow(rows[1], m.MemoryPercent);
+    if(rows[2] && m.DiskTotal) updateMetricRow(rows[2], m.DiskPercent);
 
-  row.appendChild(lbl);
-  row.appendChild(track);
-  row.appendChild(val);
-  return row;
-}
-
-function makeFooterItem(label, value) {
-  const d = el('div', 'footer-item');
-  d.appendChild(txt(label + '\u00A0'));
-  const v = el('span', 'footer-val');
-  v.textContent = value;
-  d.appendChild(v);
-  return d;
-}
-
-function buildCard(m) {
-  const isOffline = m.Status === 3 || (m.LastError && !m.CPU && !m.MemoryPercent);
-  const status    = m.Status != null ? m.Status : 3;
-  const cardId    = 'card-' + m.Name.replace(/[^a-zA-Z0-9]/g, '_');
-
-  const card = el('div', 'card' + (isOffline ? ' offline' : ''));
-  card.id = cardId;
-  card.style.setProperty('--card-accent', accentColor(status));
-
-  // Copy-flash overlay
-  const flash = el('div', 'copy-flash');
-  flash.id = 'flash-' + cardId;
-  card.appendChild(flash);
-
-  // Header
-  const header = el('div', 'card-header');
-
-  const nameWrap = el('div', 'machine-name');
-  const dot = el('div', 'status-dot ' + statusClass(status));
-  const iconSpan = el('span');
-  iconSpan.textContent = typeIcon(m.Type);
-  const nameSpan = el('span');
-  nameSpan.textContent = m.Name;
-  nameWrap.appendChild(dot);
-  nameWrap.appendChild(iconSpan);
-  nameWrap.appendChild(nameSpan);
-
-  const badge = el('span', 'machine-type-badge');
-  badge.textContent = m.Type || 'unknown';
-
-  header.appendChild(nameWrap);
-  header.appendChild(badge);
-  card.appendChild(header);
-
-  // Metrics or offline message
-  const metrics = el('div', 'metrics');
-
-  if (isOffline) {
-    const msg = el('div', 'offline-msg');
-    msg.textContent = 'UNREACHABLE';
-    const seen = el('div', 'last-seen');
-    seen.textContent = 'Last seen: ' + fmtAgo(m.LastUpdate);
-    metrics.appendChild(msg);
-    metrics.appendChild(seen);
-  } else {
-    metrics.appendChild(makeMetricRow('CPU', m.CPU, (m.CPU || 0).toFixed(0) + '%'));
-
-    const memStr = m.MemoryTotal
-      ? fmtBytes(m.MemoryUsed) + '/' + fmtBytes(m.MemoryTotal)
-      : (m.MemoryPercent || 0).toFixed(0) + '%';
-    metrics.appendChild(makeMetricRow('MEM', m.MemoryPercent, memStr));
-
-    if (m.DiskTotal) {
-      const diskStr = fmtBytes(m.DiskUsed) + '/' + fmtBytes(m.DiskTotal);
-      metrics.appendChild(makeMetricRow('DISK', m.DiskPercent, diskStr));
-    }
-  }
-  card.appendChild(metrics);
-
-  // Sparkline
-  if (!isOffline) {
-    const sparkWrap = el('div', 'sparkline-wrap');
-    const canvas = document.createElement('canvas');
-    canvas.id = 'spark-' + cardId;
-    sparkWrap.appendChild(canvas);
-    card.appendChild(sparkWrap);
+    // Update value text
+    const vals=card.querySelectorAll('.m-val');
+    if(vals[0]) vals[0].textContent=(m.CPU||0).toFixed(0)+'%';
+    if(vals[1]) vals[1].textContent=m.MemoryTotal?fmtB(m.MemoryUsed)+'/'+fmtB(m.MemoryTotal):(m.MemoryPercent||0).toFixed(0)+'%';
+    if(vals[2]&&m.DiskTotal) vals[2].textContent=fmtB(m.DiskUsed)+'/'+fmtB(m.DiskTotal);
   }
 
-  // GPU section
-  if (!isOffline && m.GPUs && m.GPUs.length > 0) {
-    const avgUtil = m.GPUs.reduce((s, g) => s + g.UtilPercent, 0) / m.GPUs.length;
-    const avgMem  = m.GPUs.reduce((s, g) => s + g.MemPercent,  0) / m.GPUs.length;
-
-    const gpuSec = el('div', 'gpu-section');
-    const gpuLbl = el('div', 'gpu-label');
-    gpuLbl.textContent = 'GPU x' + m.GPUs.length;
-    gpuSec.appendChild(gpuLbl);
-    gpuSec.appendChild(makeMetricRow('UTIL', avgUtil, avgUtil.toFixed(0) + '%'));
-    gpuSec.appendChild(makeMetricRow('GMEM', avgMem,  avgMem.toFixed(0)  + '%'));
-    card.appendChild(gpuSec);
+  // GPU
+  const gpuVals=card.querySelectorAll('.gpu-sec .m-val');
+  if(gpuVals.length>=2 && m.GPUs && m.GPUs.length) {
+    const au=m.GPUs.reduce((s,g)=>s+g.UtilPercent,0)/m.GPUs.length;
+    const am=m.GPUs.reduce((s,g)=>s+g.MemPercent,0)/m.GPUs.length;
+    gpuVals[0].textContent=au.toFixed(0)+'%';
+    gpuVals[1].textContent=am.toFixed(0)+'%';
+    const gpuRows=card.querySelectorAll('.gpu-sec .m-row');
+    updateMetricRow(gpuRows[0], au);
+    updateMetricRow(gpuRows[1], am);
   }
 
   // Footer
-  const footerItems = [];
-  if (!isOffline) {
-    if (m.UptimeSeconds > 0)
-      footerItems.push(makeFooterItem('UP:', fmtUptime(m.UptimeSeconds)));
-    if (m.Docker)
-      footerItems.push(makeFooterItem('DOCKER:', m.Docker.Running + '/' + m.Docker.Total));
-    if (m.MikroTik) {
-      footerItems.push(makeFooterItem('WiFi:', m.MikroTik.WiFiClients + ' cl'));
-      footerItems.push(makeFooterItem('rx:', fmtBytes(m.MikroTik.ETHRx)));
-    }
+  const footVals=card.querySelectorAll('.foot-v');
+  let fi=0;
+  if(m.UptimeSeconds>0 && footVals[fi]) footVals[fi++].textContent=fmtUp(m.UptimeSeconds);
+  if(m.Docker && footVals[fi]) footVals[fi++].textContent=m.Docker.Running+'/'+m.Docker.Total;
+
+  // Sparkline update (in place, no rebuild)
+  if(!isOff && charts[m.Name]) {
+    const c=charts[m.Name];
+    const h=hist[m.Name];
+    c.data.labels=h.cpu.map((_,i)=>i);
+    c.data.datasets[0].data=[...h.cpu];
+    c.data.datasets[1].data=[...h.mem];
+    c.update('none'); // no animation for smooth updates
   }
-  if (footerItems.length > 0) {
-    const footer = el('div', 'card-footer');
-    footerItems.forEach(fi => footer.appendChild(fi));
-    card.appendChild(footer);
+}
+
+function updateMetricRow(row, pct) {
+  if(!row) return;
+  const fill=row.querySelector('.bar-f');
+  if(fill) {
+    fill.style.width=Math.min(100,pct||0).toFixed(1)+'%';
+    fill.className='bar-f '+bCls(pct||0);
+  }
+}
+
+// ── Build card (first render only) ───────────────────────
+function buildCard(m, isOff) {
+  const status=m.Status!=null?m.Status:3;
+  const id=cid(m.Name);
+
+  const card=el('div','card'+(isOff?' offline':''));
+  card.id=id;
+
+  // Accent
+  const accent=el('div','card-accent');
+  accent.style.background=aCl(status);
+  card.appendChild(accent);
+
+  // Head
+  const head=el('div','card-head');
+  const name=el('div','card-name');
+  const dot=el('div','s-dot '+sCls(status));
+  const nm=el('span'); nm.textContent=m.Name;
+  name.appendChild(dot); name.appendChild(nm);
+  const tag=el('span','type-tag'); tag.textContent=m.Type||'?';
+  head.appendChild(name); head.appendChild(tag);
+  card.appendChild(head);
+
+  // Metrics
+  const metrics=el('div','metrics');
+  if(isOff) {
+    const msg=el('div','off-msg'); msg.textContent='UNREACHABLE';
+    const ts=el('div','off-ts'); ts.textContent='Last seen: '+fmtAgo(m.LastUpdate);
+    metrics.appendChild(msg); metrics.appendChild(ts);
+  } else {
+    metrics.appendChild(mkRow('CPU',m.CPU,(m.CPU||0).toFixed(0)+'%'));
+    const memS=m.MemoryTotal?fmtB(m.MemoryUsed)+'/'+fmtB(m.MemoryTotal):(m.MemoryPercent||0).toFixed(0)+'%';
+    metrics.appendChild(mkRow('MEM',m.MemoryPercent,memS));
+    if(m.DiskTotal) metrics.appendChild(mkRow('DSK',m.DiskPercent,fmtB(m.DiskUsed)+'/'+fmtB(m.DiskTotal)));
+  }
+  card.appendChild(metrics);
+
+  // Spark
+  if(!isOff) {
+    const sw=el('div','spark');
+    const cv=document.createElement('canvas');
+    cv.id='sp-'+id;
+    sw.appendChild(cv);
+    card.appendChild(sw);
+  }
+
+  // GPU
+  if(!isOff && m.GPUs && m.GPUs.length) {
+    const gs=el('div','gpu-sec');
+    const gl=el('div','gpu-tag'); gl.textContent='GPU x'+m.GPUs.length;
+    gs.appendChild(gl);
+    const au=m.GPUs.reduce((s,g)=>s+g.UtilPercent,0)/m.GPUs.length;
+    const am=m.GPUs.reduce((s,g)=>s+g.MemPercent,0)/m.GPUs.length;
+    gs.appendChild(mkRow('UTIL',au,au.toFixed(0)+'%'));
+    gs.appendChild(mkRow('VRAM',am,am.toFixed(0)+'%'));
+    card.appendChild(gs);
+  }
+
+  // Footer
+  const items=[];
+  if(!isOff) {
+    if(m.UptimeSeconds>0) items.push(['UP',fmtUp(m.UptimeSeconds)]);
+    if(m.Docker) items.push(['DOCK',m.Docker.Running+'/'+m.Docker.Total]);
+    if(m.MikroTik) items.push(['WiFi',m.MikroTik.WiFiClients+'cl']);
+  }
+  if(items.length) {
+    const ft=el('div','card-foot');
+    items.forEach(([l,v])=>{
+      const s=el('span'); s.textContent=l+' ';
+      const vs=el('span','foot-v'); vs.textContent=v;
+      s.appendChild(vs); ft.appendChild(s);
+    });
+    card.appendChild(ft);
   }
 
   // SSH tooltip
-  const cmd = sshCmd(m);
-  if (cmd) {
-    const tip = el('div', 'ssh-tooltip');
-    tip.textContent = 'Click: ' + cmd;
+  const cmd=sshCmd(m);
+  if(cmd) {
+    const tip=el('div','ssh-tip'); tip.textContent=cmd;
     card.appendChild(tip);
-
-    card.addEventListener('click', () => {
-      navigator.clipboard.writeText(cmd).then(() => {
-        flash.classList.add('show');
-        setTimeout(() => flash.classList.remove('show'), 300);
-      }).catch(() => {});
+    card.style.cursor='pointer';
+    card.addEventListener('click',()=>{
+      navigator.clipboard.writeText(cmd).catch(()=>{});
+      card.style.borderColor='var(--cyan)';
+      setTimeout(()=>card.style.borderColor='',300);
     });
   }
+
+  // Init chart after DOM insert (deferred)
+  requestAnimationFrame(()=>initChart(m.Name,'sp-'+id));
 
   return card;
 }
 
-function renderCard(m) {
-  const grid   = document.getElementById('grid');
-  const cardId = 'card-' + m.Name.replace(/[^a-zA-Z0-9]/g, '_');
-  const existing = document.getElementById(cardId);
-
-  if (existing) {
-    // Destroy old chart before replacing node
-    if (charts[m.Name]) {
-      charts[m.Name].destroy();
-      delete charts[m.Name];
-    }
-    const newCard = buildCard(m);
-    grid.replaceChild(newCard, existing);
-    newCard.classList.add('updated');
-    setTimeout(() => newCard.classList.remove('updated'), 500);
-  } else {
-    grid.appendChild(buildCard(m));
-  }
-
-  // Init sparkline after DOM insertion
-  const isOffline = m.Status === 3 || (m.LastError && !m.CPU && !m.MemoryPercent);
-  if (!isOffline) {
-    initChart(m.Name, 'spark-' + cardId);
-  }
+function mkRow(label, pct, valStr) {
+  const row=el('div','m-row');
+  const lbl=el('div','m-lbl'); lbl.textContent=label;
+  const trk=el('div','bar-t');
+  const fill=el('div','bar-f '+bCls(pct||0));
+  fill.style.width=Math.min(100,pct||0).toFixed(1)+'%';
+  trk.appendChild(fill);
+  const val=el('div','m-val'); val.textContent=valStr;
+  row.appendChild(lbl); row.appendChild(trk); row.appendChild(val);
+  return row;
 }
 
-// ── Sparklines ────────────────────────────────────────────────────────────
+// ── Chart.js sparklines ──────────────────────────────────
 function initChart(name, canvasId) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-
-  const h = history[name] || { cpu: [], mem: [] };
-  const labels = h.cpu.map((_, i) => i);
-
-  charts[name] = new Chart(canvas, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [
-        {
-          label: 'CPU',
-          data: [...h.cpu],
-          borderColor: '#06b6d4',
-          borderWidth: 1.5,
-          pointRadius: 0,
-          fill: true,
-          backgroundColor: 'rgba(6,182,212,0.08)',
-          tension: 0.3,
-        },
-        {
-          label: 'MEM',
-          data: [...h.mem],
-          borderColor: '#8b5cf6',
-          borderWidth: 1.5,
-          pointRadius: 0,
-          fill: true,
-          backgroundColor: 'rgba(139,92,246,0.08)',
-          tension: 0.3,
-        },
-      ],
+  const cv=document.getElementById(canvasId);
+  if(!cv || charts[name]) return;
+  const h=hist[name]||{cpu:[],mem:[]};
+  charts[name]=new Chart(cv, {
+    type:'line',
+    data:{
+      labels:h.cpu.map((_,i)=>i),
+      datasets:[
+        {data:[...h.cpu],borderColor:'#06b6d4',borderWidth:1.2,pointRadius:0,fill:true,backgroundColor:'rgba(6,182,212,0.06)',tension:0.3},
+        {data:[...h.mem],borderColor:'#8b5cf6',borderWidth:1.2,pointRadius:0,fill:true,backgroundColor:'rgba(139,92,246,0.06)',tension:0.3}
+      ]
     },
-    options: {
-      animation: false,
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false }, tooltip: { enabled: false } },
-      scales: {
-        x: { display: false },
-        y: { display: false, min: 0, max: 100 },
-      },
-    },
+    options:{
+      animation:false,responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{enabled:false}},
+      scales:{x:{display:false},y:{display:false,min:0,max:100}}
+    }
   });
 }
 
-// ── Boot ──────────────────────────────────────────────────────────────────
-fetch('/api/machines')
-  .then(r => r.json())
-  .then(data => { if (data && data.length) handleUpdate(data); })
-  .catch(() => {});
-
+// ── Boot ─────────────────────────────────────────────────
+fetch('/api/machines').then(r=>r.json()).then(d=>{if(d&&d.length)render(d)}).catch(()=>{});
 connect();
 </script>
 </body>
