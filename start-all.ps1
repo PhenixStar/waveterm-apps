@@ -1,17 +1,37 @@
-# One-click: start web services + Wave Terminal
-Write-Host "=== Wave Terminal MBP Launcher ===" -ForegroundColor Cyan
-Write-Host ""
+# Wave Terminal MBP — headless service launcher
+# Servers run completely hidden (no windows). Use stop-all.ps1 to kill.
 
-# Start web services
-& "$PSScriptRoot\start-services.ps1"
-Write-Host ""
+$pidFile = "$PSScriptRoot\.service-pids"
 
-# Wait for servers to be ready
-Write-Host "Waiting for servers..." -ForegroundColor Yellow
+# Kill any previous instances
+if (Test-Path $pidFile) {
+    Get-Content $pidFile | ForEach-Object {
+        Stop-Process -Id $_ -ErrorAction SilentlyContinue
+    }
+    Remove-Item $pidFile
+}
+
+Write-Host "Starting services (headless)..." -ForegroundColor Cyan
+
+$dash = Start-Process -FilePath "$PSScriptRoot\bin\wt-dashboard-web.exe" `
+    -WorkingDirectory $PSScriptRoot `
+    -WindowStyle Hidden -PassThru
+
+$docker = Start-Process -FilePath "$PSScriptRoot\bin\wt-docker-panel-web.exe" `
+    -ArgumentList "-config","$PSScriptRoot\machines.json" `
+    -WorkingDirectory $PSScriptRoot `
+    -WindowStyle Hidden -PassThru
+
+# Save PIDs for stop script
+"$($dash.Id)`n$($docker.Id)" | Set-Content $pidFile
+
+Write-Host "  Dashboard  PID $($dash.Id)  http://localhost:9800" -ForegroundColor Green
+Write-Host "  Docker     PID $($docker.Id)  http://localhost:9801" -ForegroundColor Green
+
+# Health check
 Start-Sleep -Seconds 2
+$ok = 0
+try { $null = Invoke-WebRequest -Uri "http://localhost:9800" -TimeoutSec 3 -UseBasicParsing; $ok++; Write-Host "  Dashboard:  OK" -ForegroundColor Green } catch { Write-Host "  Dashboard:  starting..." -ForegroundColor Yellow }
+try { $null = Invoke-WebRequest -Uri "http://localhost:9801" -TimeoutSec 3 -UseBasicParsing; $ok++; Write-Host "  Docker:     OK" -ForegroundColor Green } catch { Write-Host "  Docker:     starting..." -ForegroundColor Yellow }
 
-# Check health
-try { $null = Invoke-WebRequest -Uri "http://localhost:9800" -TimeoutSec 3 -UseBasicParsing; Write-Host "  Dashboard: OK" -ForegroundColor Green } catch { Write-Host "  Dashboard: not ready yet (will auto-retry in Wave)" -ForegroundColor Yellow }
-try { $null = Invoke-WebRequest -Uri "http://localhost:9801" -TimeoutSec 3 -UseBasicParsing; Write-Host "  Docker panel: OK" -ForegroundColor Green } catch { Write-Host "  Docker panel: not ready yet" -ForegroundColor Yellow }
-
-Write-Host "`nReady. Open Wave Terminal now." -ForegroundColor Cyan
+Write-Host "`nReady ($ok/2 healthy). PIDs saved to .service-pids" -ForegroundColor Cyan
