@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Infrastructure Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:          #0a0a12;
+    --card-bg:     #1a1a2e;
+    --card-border: #2a2a45;
+    --text:        #e2e8f0;
+    --muted:       #64748b;
+    --cyan:        #06b6d4;
+    --green:       #10b981;
+    --yellow:      #f59e0b;
+    --red:         #ef4444;
+    --purple:      #8b5cf6;
+    --bar-bg:      #0f172a;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px;
+    min-height: 100vh;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--card-border);
+    background: rgba(26,26,46,0.8);
+    backdrop-filter: blur(6px);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  header h1 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--cyan);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .header-stats {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .stat-badge { display: flex; align-items: center; gap: 4px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot-green  { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .dot-red    { background: var(--red);   box-shadow: 0 0 6px var(--red); }
+
+  .ws-indicator {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    background: #0f172a;
+    border: 1px solid var(--card-border);
+  }
+  .ws-connected    { color: var(--green);  border-color: var(--green); }
+  .ws-disconnected { color: var(--red);    border-color: var(--red); }
+  .ws-connecting   { color: var(--yellow); border-color: var(--yellow); }
+
+  #last-updated { color: var(--muted); font-size: 11px; }
+
+  main { padding: 16px 20px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 14px;
+  }
+
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 14px;
+    transition: border-color 0.2s, transform 0.15s;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  .card:hover { border-color: var(--cyan); transform: translateY(-1px); }
+  .card.offline { opacity: 0.55; }
+  .card.offline:hover { border-color: var(--red); }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--card-accent, var(--cyan));
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .machine-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .status-ok       { background: var(--green);  box-shadow: 0 0 8px var(--green); }
+  .status-warning  { background: var(--yellow); box-shadow: 0 0 8px var(--yellow); }
+  .status-critical { background: var(--red);    box-shadow: 0 0 8px var(--red); animation: pulse-red 1s infinite; }
+  .status-unknown  { background: var(--muted); }
+
+  @keyframes pulse-red {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
+  }
+
+  .machine-type-badge {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    background: #0f172a;
+    color: var(--muted);
+    border: 1px solid var(--card-border);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .metrics { display: flex; flex-direction: column; gap: 6px; }
+
+  .metric-row {
+    display: grid;
+    grid-template-columns: 36px 1fr 46px;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+  }
+  .metric-label { color: var(--muted); }
+  .metric-value { text-align: right; font-variant-numeric: tabular-nums; }
+
+  .bar-track {
+    height: 6px;
+    background: var(--bar-bg);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+  .bar-ok       { background: var(--green); }
+  .bar-warning  { background: var(--yellow); }
+  .bar-critical { background: var(--red); }
+
+  .sparkline-wrap { margin-top: 8px; height: 40px; position: relative; }
+  .sparkline-wrap canvas { width: 100% !important; height: 40px !important; }
+
+  .gpu-section {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--card-border);
+  }
+  .gpu-label {
+    font-size: 10px;
+    color: var(--purple);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+
+  .card-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid var(--card-border);
+    font-size: 11px;
+    color: var(--muted);
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .footer-item { display: flex; align-items: center; gap: 4px; }
+  .footer-val  { color: var(--text); }
+
+  .offline-msg { text-align: center; padding: 10px 0 4px; color: var(--red); font-size: 12px; }
+  .last-seen   { text-align: center; color: var(--muted); font-size: 11px; margin-top: 2px; }
+
+  .copy-flash {
+    position: absolute;
+    inset: 0;
+    background: rgba(6,182,212,0.08);
+    border-radius: 8px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .copy-flash.show { opacity: 1; }
+
+  .ssh-tooltip {
+    position: absolute;
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0f172a;
+    border: 1px solid var(--cyan);
+    color: var(--cyan);
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 4px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 5;
+  }
+  .card:hover .ssh-tooltip { opacity: 1; }
+
+  @keyframes flash-update {
+    0%   { background: rgba(6,182,212,0.12); }
+    100% { background: var(--card-bg); }
+  }
+  .card.updated { animation: flash-update 0.5s ease-out; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>&#9670; Infrastructure Dashboard</h1>
+  <div class="header-stats">
+    <div class="stat-badge">
+      <div class="dot dot-green"></div>
+      <span id="count-online">0</span>&nbsp;online
+    </div>
+    <div class="stat-badge">
+      <div class="dot dot-red"></div>
+      <span id="count-offline">0</span>&nbsp;offline
+    </div>
+    <div id="last-updated">--</div>
+    <div id="ws-status" class="ws-indicator ws-connecting">WS connecting...</div>
+  </div>
+</header>
+
+<main>
+  <div class="grid" id="grid">
+    <div id="placeholder" style="color:var(--muted);padding:40px 0;text-align:center;grid-column:1/-1">
+      Connecting to dashboard server...
+    </div>
+  </div>
+</main>
+
+<script>
+// ── Helpers ───────────────────────────────────────────────────────────────
+function esc(s) {
+  // Escape text for safe textContent assignment — not needed for textContent
+  // but kept as a guard when we must use createTextNode
+  return String(s == null ? '' : s);
+}
+
+function el(tag, cls) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  return e;
+}
+
+function txt(content) {
+  return document.createTextNode(String(content == null ? '' : content));
+}
+
+function fmtBytes(b) {
+  if (!b) return '0B';
+  const units = ['B','K','M','G','T'];
+  let v = b, i = 0;
+  while (v >= 1024 && i < units.length - 1) { v /= 1024; i++; }
+  return i === 0 ? b + 'B' : v.toFixed(1) + units[i];
+}
+
+function fmtUptime(sec) {
+  if (!sec || sec <= 0) return '?';
+  const d = Math.floor(sec / 86400);
+  const h = Math.floor((sec % 86400) / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  if (d > 0) return d + 'd ' + h + 'h';
+  if (h > 0) return h + 'h ' + m + 'm';
+  return m + 'm';
+}
+
+function fmtAgo(isoStr) {
+  if (!isoStr) return '?';
+  const diff = Math.floor((Date.now() - new Date(isoStr).getTime()) / 1000);
+  if (diff < 60)   return diff + 's ago';
+  if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+  return Math.floor(diff / 3600) + 'h ago';
+}
+
+function barClass(pct) {
+  if (pct >= 95) return 'bar-critical';
+  if (pct >= 80) return 'bar-warning';
+  return 'bar-ok';
+}
+
+function statusClass(s) {
+  return ['status-ok','status-warning','status-critical','status-unknown'][s] || 'status-unknown';
+}
+
+function accentColor(s) {
+  return ['var(--green)','var(--yellow)','var(--red)','var(--muted)'][s] || 'var(--muted)';
+}
+
+function typeIcon(t) {
+  if (t === 'linux')    return '\u{1F5A5}';  // desktop computer
+  if (t === 'windows')  return '\u{1F4BB}';  // laptop
+  if (t === 'mikrotik') return '\u{1F50C}';  // plug (closest to router)
+  return '\u{1F4BB}';
+}
+
+function sshCmd(m) {
+  if (m.Type === 'windows') return null;
+  const port = (m.Port && m.Port !== 22) ? ' -p ' + m.Port : '';
+  return 'ssh ' + m.User + '@' + m.Host + port;
+}
+
+// ── State ─────────────────────────────────────────────────────────────────
+const history = {};   // name -> { cpu: [], mem: [] }
+const charts  = {};   // name -> Chart
+const MAX_H   = 8;
+
+// ── WebSocket ─────────────────────────────────────────────────────────────
+let ws = null;
+let reconnectDelay = 1000;
+
+function connect() {
+  const wsEl = document.getElementById('ws-status');
+  wsEl.textContent = 'WS connecting...';
+  wsEl.className = 'ws-indicator ws-connecting';
+
+  ws = new WebSocket('ws://' + location.host + '/ws');
+
+  ws.onopen = () => {
+    reconnectDelay = 1000;
+    wsEl.textContent = 'WS live';
+    wsEl.className = 'ws-indicator ws-connected';
+  };
+
+  ws.onmessage = (evt) => {
+    try {
+      const payload = JSON.parse(evt.data);
+      if (payload.type === 'machines') handleUpdate(payload.data);
+    } catch (e) { /* ignore */ }
+  };
+
+  ws.onclose = () => {
+    wsEl.textContent = 'WS offline';
+    wsEl.className = 'ws-indicator ws-disconnected';
+    setTimeout(connect, reconnectDelay);
+    reconnectDelay = Math.min(reconnectDelay * 2, 30000);
+  };
+
+  ws.onerror = () => ws.close();
+}
+
+// ── Update handler ────────────────────────────────────────────────────────
+function handleUpdate(machines) {
+  let online = 0, offline = 0;
+
+  // Remove placeholder on first data
+  const ph = document.getElementById('placeholder');
+  if (ph) ph.remove();
+
+  machines.forEach(m => {
+    const isOffline = m.Status === 3 || (m.LastError && !m.CPU && !m.MemoryPercent);
+    if (isOffline) offline++; else online++;
+
+    if (!history[m.Name]) history[m.Name] = { cpu: [], mem: [] };
+    const h = history[m.Name];
+    h.cpu.push(m.CPU || 0);
+    h.mem.push(m.MemoryPercent || 0);
+    if (h.cpu.length > MAX_H) h.cpu.shift();
+    if (h.mem.length > MAX_H) h.mem.shift();
+
+    renderCard(m);
+  });
+
+  document.getElementById('count-online').textContent = online;
+  document.getElementById('count-offline').textContent = offline;
+  document.getElementById('last-updated').textContent =
+    'Updated ' + new Date().toLocaleTimeString();
+}
+
+// ── DOM card builder (no innerHTML on untrusted data) ─────────────────────
+function makeMetricRow(label, pct, valueStr) {
+  const row = el('div', 'metric-row');
+
+  const lbl = el('div', 'metric-label');
+  lbl.textContent = label;
+
+  const track = el('div', 'bar-track');
+  const fill  = el('div', 'bar-fill ' + barClass(pct || 0));
+  fill.style.width = Math.min(100, pct || 0).toFixed(1) + '%';
+  track.appendChild(fill);
+
+  const val = el('div', 'metric-value');
+  val.textContent = valueStr;
+
+  row.appendChild(lbl);
+  row.appendChild(track);
+  row.appendChild(val);
+  return row;
+}
+
+function makeFooterItem(label, value) {
+  const d = el('div', 'footer-item');
+  d.appendChild(txt(label + '\u00A0'));
+  const v = el('span', 'footer-val');
+  v.textContent = value;
+  d.appendChild(v);
+  return d;
+}
+
+function buildCard(m) {
+  const isOffline = m.Status === 3 || (m.LastError && !m.CPU && !m.MemoryPercent);
+  const status    = m.Status != null ? m.Status : 3;
+  const cardId    = 'card-' + m.Name.replace(/[^a-zA-Z0-9]/g, '_');
+
+  const card = el('div', 'card' + (isOffline ? ' offline' : ''));
+  card.id = cardId;
+  card.style.setProperty('--card-accent', accentColor(status));
+
+  // Copy-flash overlay
+  const flash = el('div', 'copy-flash');
+  flash.id = 'flash-' + cardId;
+  card.appendChild(flash);
+
+  // Header
+  const header = el('div', 'card-header');
+
+  const nameWrap = el('div', 'machine-name');
+  const dot = el('div', 'status-dot ' + statusClass(status));
+  const iconSpan = el('span');
+  iconSpan.textContent = typeIcon(m.Type);
+  const nameSpan = el('span');
+  nameSpan.textContent = m.Name;
+  nameWrap.appendChild(dot);
+  nameWrap.appendChild(iconSpan);
+  nameWrap.appendChild(nameSpan);
+
+  const badge = el('span', 'machine-type-badge');
+  badge.textContent = m.Type || 'unknown';
+
+  header.appendChild(nameWrap);
+  header.appendChild(badge);
+  card.appendChild(header);
+
+  // Metrics or offline message
+  const metrics = el('div', 'metrics');
+
+  if (isOffline) {
+    const msg = el('div', 'offline-msg');
+    msg.textContent = 'UNREACHABLE';
+    const seen = el('div', 'last-seen');
+    seen.textContent = 'Last seen: ' + fmtAgo(m.LastUpdate);
+    metrics.appendChild(msg);
+    metrics.appendChild(seen);
+  } else {
+    metrics.appendChild(makeMetricRow('CPU', m.CPU, (m.CPU || 0).toFixed(0) + '%'));
+
+    const memStr = m.MemoryTotal
+      ? fmtBytes(m.MemoryUsed) + '/' + fmtBytes(m.MemoryTotal)
+      : (m.MemoryPercent || 0).toFixed(0) + '%';
+    metrics.appendChild(makeMetricRow('MEM', m.MemoryPercent, memStr));
+
+    if (m.DiskTotal) {
+      const diskStr = fmtBytes(m.DiskUsed) + '/' + fmtBytes(m.DiskTotal);
+      metrics.appendChild(makeMetricRow('DISK', m.DiskPercent, diskStr));
+    }
+  }
+  card.appendChild(metrics);
+
+  // Sparkline
+  if (!isOffline) {
+    const sparkWrap = el('div', 'sparkline-wrap');
+    const canvas = document.createElement('canvas');
+    canvas.id = 'spark-' + cardId;
+    sparkWrap.appendChild(canvas);
+    card.appendChild(sparkWrap);
+  }
+
+  // GPU section
+  if (!isOffline && m.GPUs && m.GPUs.length > 0) {
+    const avgUtil = m.GPUs.reduce((s, g) => s + g.UtilPercent, 0) / m.GPUs.length;
+    const avgMem  = m.GPUs.reduce((s, g) => s + g.MemPercent,  0) / m.GPUs.length;
+
+    const gpuSec = el('div', 'gpu-section');
+    const gpuLbl = el('div', 'gpu-label');
+    gpuLbl.textContent = 'GPU x' + m.GPUs.length;
+    gpuSec.appendChild(gpuLbl);
+    gpuSec.appendChild(makeMetricRow('UTIL', avgUtil, avgUtil.toFixed(0) + '%'));
+    gpuSec.appendChild(makeMetricRow('GMEM', avgMem,  avgMem.toFixed(0)  + '%'));
+    card.appendChild(gpuSec);
+  }
+
+  // Footer
+  const footerItems = [];
+  if (!isOffline) {
+    if (m.UptimeSeconds > 0)
+      footerItems.push(makeFooterItem('UP:', fmtUptime(m.UptimeSeconds)));
+    if (m.Docker)
+      footerItems.push(makeFooterItem('DOCKER:', m.Docker.Running + '/' + m.Docker.Total));
+    if (m.MikroTik) {
+      footerItems.push(makeFooterItem('WiFi:', m.MikroTik.WiFiClients + ' cl'));
+      footerItems.push(makeFooterItem('rx:', fmtBytes(m.MikroTik.ETHRx)));
+    }
+  }
+  if (footerItems.length > 0) {
+    const footer = el('div', 'card-footer');
+    footerItems.forEach(fi => footer.appendChild(fi));
+    card.appendChild(footer);
+  }
+
+  // SSH tooltip
+  const cmd = sshCmd(m);
+  if (cmd) {
+    const tip = el('div', 'ssh-tooltip');
+    tip.textContent = 'Click: ' + cmd;
+    card.appendChild(tip);
+
+    card.addEventListener('click', () => {
+      navigator.clipboard.writeText(cmd).then(() => {
+        flash.classList.add('show');
+        setTimeout(() => flash.classList.remove('show'), 300);
+      }).catch(() => {});
+    });
+  }
+
+  return card;
+}
+
+function renderCard(m) {
+  const grid   = document.getElementById('grid');
+  const cardId = 'card-' + m.Name.replace(/[^a-zA-Z0-9]/g, '_');
+  const existing = document.getElementById(cardId);
+
+  if (existing) {
+    // Destroy old chart before replacing node
+    if (charts[m.Name]) {
+      charts[m.Name].destroy();
+      delete charts[m.Name];
+    }
+    const newCard = buildCard(m);
+    grid.replaceChild(newCard, existing);
+    newCard.classList.add('updated');
+    setTimeout(() => newCard.classList.remove('updated'), 500);
+  } else {
+    grid.appendChild(buildCard(m));
+  }
+
+  // Init sparkline after DOM insertion
+  const isOffline = m.Status === 3 || (m.LastError && !m.CPU && !m.MemoryPercent);
+  if (!isOffline) {
+    initChart(m.Name, 'spark-' + cardId);
+  }
+}
+
+// ── Sparklines ────────────────────────────────────────────────────────────
+function initChart(name, canvasId) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+
+  const h = history[name] || { cpu: [], mem: [] };
+  const labels = h.cpu.map((_, i) => i);
+
+  charts[name] = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'CPU',
+          data: [...h.cpu],
+          borderColor: '#06b6d4',
+          borderWidth: 1.5,
+          pointRadius: 0,
+          fill: true,
+          backgroundColor: 'rgba(6,182,212,0.08)',
+          tension: 0.3,
+        },
+        {
+          label: 'MEM',
+          data: [...h.mem],
+          borderColor: '#8b5cf6',
+          borderWidth: 1.5,
+          pointRadius: 0,
+          fill: true,
+          backgroundColor: 'rgba(139,92,246,0.08)',
+          tension: 0.3,
+        },
+      ],
+    },
+    options: {
+      animation: false,
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      scales: {
+        x: { display: false },
+        y: { display: false, min: 0, max: 100 },
+      },
+    },
+  });
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────
+fetch('/api/machines')
+  .then(r => r.json())
+  .then(data => { if (data && data.length) handleUpdate(data); })
+  .catch(() => {});
+
+connect();
+</script>
+</body>
+</html>
