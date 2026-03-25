@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -609,10 +610,26 @@ func (srv *Server) statsBroadcastLoop() {
 // Main
 // ─────────────────────────────────────────────
 
+// portInUse checks if a TCP port is already bound.
+func portInUse(port int) bool {
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf("localhost:%d", port), 500*time.Millisecond)
+	if err != nil {
+		return false
+	}
+	conn.Close()
+	return true
+}
+
 func main() {
 	port := flag.Int("port", 9801, "HTTP listen port")
 	configPath := flag.String("config", "", "Path to machines.json")
 	flag.Parse()
+
+	// Idempotent: if port already in use, another instance is serving
+	if portInUse(*port) {
+		log.Printf("Port %d already in use — another instance is running. Exiting.", *port)
+		select {}
+	}
 
 	machines, err := loadMachines(*configPath)
 	if err != nil {

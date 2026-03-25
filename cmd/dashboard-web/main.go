@@ -807,10 +807,27 @@ func serveHTTP(cfg *Config, st *store, h *hub) {
 // Main
 // ============================================================================
 
+// portInUse checks if a TCP port is already bound.
+func portInUse(port int) bool {
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf("localhost:%d", port), 500*time.Millisecond)
+	if err != nil {
+		return false
+	}
+	conn.Close()
+	return true
+}
+
 func main() {
 	cfgPath := "machines.json"
 	if len(os.Args) > 1 {
 		cfgPath = os.Args[1]
+	}
+
+	// Idempotent: if port already in use, another instance is serving
+	if portInUse(9800) {
+		log.Printf("Port 9800 already in use — another instance is running. Exiting.")
+		// Block forever so Wave's cmd:persistent keeps the block alive
+		select {}
 	}
 
 	cfg, err := loadConfig(cfgPath)
