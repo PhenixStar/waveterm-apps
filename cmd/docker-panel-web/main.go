@@ -19,7 +19,9 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -524,8 +526,10 @@ func (srv *Server) handleAPI(w http.ResponseWriter, r *http.Request) {
 		if len(parts) >= 5 && parts[4] == "logs" {
 			stream := len(parts) >= 6 && parts[5] == "stream"
 			tail := 200
-			if t := r.URL.Query().Get("tail"); t != "" {
-				fmt.Sscanf(t, "%d", &tail)
+			if tailStr := r.URL.Query().Get("tail"); tailStr != "" {
+				if n, err := strconv.Atoi(tailStr); err == nil && n > 0 && n <= 10000 {
+					tail = n
+				}
 			}
 			if stream {
 				w.Header().Set("Content-Type", "text/event-stream")
@@ -646,12 +650,20 @@ func main() {
 	state.poll(machines)
 	log.Printf("Found %d container(s)", len(state.containers))
 
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+
 	// Background polling every 15s
 	go func() {
 		ticker := time.NewTicker(15 * time.Second)
 		defer ticker.Stop()
-		for range ticker.C {
-			state.poll(machines)
+		for {
+			select {
+			case <-ticker.C:
+				state.poll(machines)
+			case <-ctx.Done():
+				return
+			}
 		}
 	}()
 

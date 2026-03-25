@@ -10,6 +10,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha1" //nolint:gosec -- WebSocket RFC 6455 requires SHA-1
 	"encoding/base64"
 	"encoding/json"
@@ -21,6 +22,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -213,15 +215,19 @@ func expandHome(path string) string {
 func (p *sshPool) connect(m MachineConfig) (*gossh.Client, error) {
 	key := fmt.Sprintf("%s@%s:%d", m.User, m.Host, m.Port)
 
+	// Hold the lock for the full read-check-reconnect cycle to prevent TOCTOU
+	// races when multiple goroutines connect to the same host concurrently.
+	// SSH dial timeout (p.timeout) bounds the maximum lock hold time.
 	p.mu.Lock()
-	c := p.clients[key]
-	p.mu.Unlock()
+	defer p.mu.Unlock()
 
+	c := p.clients[key]
 	if c != nil {
 		if _, _, err := c.SendRequest("keepalive@openssh.com", true, nil); err == nil {
 			return c, nil
 		}
 		c.Close()
+		delete(p.clients, key)
 	}
 
 	var auths []gossh.AuthMethod
@@ -241,9 +247,11 @@ func (p *sshPool) connect(m MachineConfig) (*gossh.Client, error) {
 	}
 
 	sshCfg := &gossh.ClientConfig{
-		User:            m.User,
-		Auth:            auths,
-		HostKeyCallback: gossh.InsecureIgnoreHostKey(), //nolint:gosec -- internal lab hosts
+		User: m.User,
+		Auth: auths,
+		// InsecureIgnoreHostKey is intentional: these are internal lab hosts
+		// with no known_hosts entries. Do not change for production deployments.
+		HostKeyCallback: gossh.InsecureIgnoreHostKey(), //nolint:gosec
 		Timeout:         p.timeout,
 	}
 
@@ -253,9 +261,7 @@ func (p *sshPool) connect(m MachineConfig) (*gossh.Client, error) {
 		return nil, fmt.Errorf("dial %s: %w", addr, err)
 	}
 
-	p.mu.Lock()
 	p.clients[key] = conn
-	p.mu.Unlock()
 	return conn, nil
 }
 
@@ -442,9 +448,17 @@ func collectWindows(m MachineConfig) *MachineStatus {
 
 	runPS := func(script string) string {
 		cmd := exec.Command("powershell.exe", "-NoLogo", "-NonInteractive", "-Command", script)
-		var buf bytes.Buffer
+		var buf, errBuf bytes.Buffer
 		cmd.Stdout = &buf
-		cmd.Run() //nolint:errcheck -- errors reflected in empty output
+		cmd.Stderr = &errBuf
+		if err := cmd.Run(); err != nil {
+			preview := script
+			if len(preview) > 40 {
+				preview = preview[:40]
+			}
+			log.Printf("ps: %s: %v: %s", preview, err, strings.TrimSpace(errBuf.String()))
+			return ""
+		}
 		return strings.TrimSpace(buf.String())
 	}
 
@@ -869,11 +883,20 @@ func main() {
 	}
 	pushFn()
 
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+
 	ticker := time.NewTicker(time.Duration(cfg.PollIntervalSeconds) * time.Second)
 	defer ticker.Stop()
 
-	for range ticker.C {
-		pollOnce(cfg, pool, st, t)
-		pushFn()
+	for {
+		select {
+		case <-ticker.C:
+			pollOnce(cfg, pool, st, t)
+			pushFn()
+		case <-ctx.Done():
+			log.Println("Shutting down.")
+			return
+		}
 	}
 }

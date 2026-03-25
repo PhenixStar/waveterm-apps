@@ -1,4 +1,4 @@
-.PHONY: all dashboard dashboard-web docker-panel docker-panel-web monitor clean
+.PHONY: all dashboard dashboard-web docker-panel docker-panel-web monitor vet test lint clean
 
 all: dashboard dashboard-web docker-panel docker-panel-web monitor
 
@@ -16,6 +16,14 @@ docker-panel-web:
 
 monitor:
 	go build -o bin/wt-monitor.exe ./cmd/monitor/
+
+vet:
+	go vet ./...
+
+test:
+	go test ./...
+
+lint: vet
 
 clean:
 	rm -rf bin/

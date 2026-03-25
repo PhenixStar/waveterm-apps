@@ -1,0 +1,33 @@
+{
+  "pollIntervalSeconds": 15,
+  "sshTimeoutSeconds": 10,
+  "machines": [
+    {
+      "name": "Sweep",
+      "host": "localhost",
+      "port": 0,
+      "user": "your-username",
+      "type": "windows",
+      "keyPath": "",
+      "comment": "localhost — polled via exec.Command(powershell), no SSH"
+    },
+    {
+      "name": "linux-server",
+      "host": "192.168.1.10",
+      "port": 22,
+      "user": "your-user",
+      "type": "linux",
+      "keyPath": "~/.ssh/id_ed25519",
+      "comment": "Linux server example"
+    },
+    {
+      "name": "mikrotik-router",
+      "host": "192.168.1.1",
+      "port": 2222,
+      "user": "admin",
+      "type": "mikrotik",
+      "keyPath": "~/.ssh/id_ed25519",
+      "comment": "MikroTik RouterOS example"
+    }
+  ]
+}
