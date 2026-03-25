@@ -1,0 +1,179 @@
+{
+  "_comment": "Network topology graph data — matches real infra as of 2026-03-25",
+  "_vlans": {
+    "100": "LAN",
+    "101": "Corp",
+    "102": "CC",
+    "103": "Crypto",
+    "104": "Media",
+    "105": "POS",
+    "106": "Staff",
+    "40":  "CCTV",
+    "50":  "Guest-ATL",
+    "60":  "Guest-WiFi",
+    "110": "Management"
+  },
+  "nodes": [
+    {
+      "id": "wan-globe",
+      "label": "Globe-WAN",
+      "type": "cloud",
+      "vlan": 100,
+      "ip": "120.28.138.55",
+      "status": "online",
+      "metadata": { "isp": "Globe", "type": "WAN" }
+    },
+    {
+      "id": "wan-pldt",
+      "label": "PLDT-WAN",
+      "type": "cloud",
+      "vlan": 100,
+      "ip": "dynamic",
+      "status": "online",
+      "metadata": { "isp": "PLDT", "type": "WAN-backup" }
+    },
+    {
+      "id": "cf-tunnel-voice",
+      "label": "CF:voice",
+      "type": "cloud",
+      "vlan": 100,
+      "ip": "voice.nulled.ai",
+      "status": "online",
+      "metadata": { "provider": "Cloudflare Tunnel", "domain": "voice.nulled.ai" }
+    },
+    {
+      "id": "cf-tunnel-hive",
+      "label": "CF:hive",
+      "type": "cloud",
+      "vlan": 100,
+      "ip": "hive.nulled.ai",
+      "status": "online",
+      "metadata": { "provider": "Cloudflare Tunnel", "domain": "hive.nulled.ai" }
+    },
+    {
+      "id": "ccr1036",
+      "label": "CCR1036-HQ",
+      "type": "router",
+      "vlan": 100,
+      "ip": "10.10.101.1",
+      "status": "online",
+      "metadata": {
+        "model": "CCR1036-12G-4S+",
+        "firmware": "RouterOS v7.x",
+        "location": "Makati HQ",
+        "role": "Core router — manages all sites"
+      }
+    },
+    {
+      "id": "annex4",
+      "label": "Annex-4",
+      "type": "router",
+      "vlan": 106,
+      "ip": "10.1.1.1",
+      "status": "online",
+      "metadata": {
+        "model": "MikroTik RB5009",
+        "location": "Annex-4 (Mobile)",
+        "wan1": "Globe LTE",
+        "wan2": "PLDT"
+      }
+    },
+    {
+      "id": "dgx1",
+      "label": "DGX1-V100",
+      "type": "server",
+      "vlan": 101,
+      "ip": "10.10.101.13",
+      "status": "online",
+      "metadata": {
+        "gpu": "4x V100-32GB",
+        "role": "Primary AI server",
+        "os": "Ubuntu 22.04",
+        "ssh_port": "2222"
+      }
+    },
+    {
+      "id": "sweep",
+      "label": "Sweep-Win",
+      "type": "laptop",
+      "vlan": 101,
+      "ip": "10.10.101.x",
+      "status": "online",
+      "metadata": {
+        "os": "Windows 11 Pro WS",
+        "role": "Dev machine",
+        "node": "25.6",
+        "user": "Kratos"
+      }
+    },
+    {
+      "id": "lenovo-pgx",
+      "label": "Lenovo-PGX",
+      "type": "server",
+      "vlan": 101,
+      "ip": "TBD",
+      "status": "offline",
+      "metadata": { "status": "incoming", "role": "TBD" }
+    },
+    {
+      "id": "dgx-rack-32",
+      "label": "DGX-Rack-32G",
+      "type": "server",
+      "vlan": 101,
+      "ip": "TBD",
+      "status": "offline",
+      "metadata": { "gpu": "8x V100-32GB", "status": "incoming" }
+    },
+    {
+      "id": "dgx-rack-16",
+      "label": "DGX-Rack-16G",
+      "type": "server",
+      "vlan": 101,
+      "ip": "TBD",
+      "status": "offline",
+      "metadata": { "gpu": "8x V100-16GB", "status": "incoming" }
+    },
+    {
+      "id": "asus-gb10",
+      "label": "ASUS-GB10",
+      "type": "server",
+      "vlan": 101,
+      "ip": "TBD",
+      "status": "offline",
+      "metadata": { "status": "incoming fleet", "role": "inference nodes" }
+    },
+    {
+      "id": "mce-vps",
+      "label": "MCE-VPS",
+      "type": "server",
+      "vlan": 100,
+      "ip": "152.42.191.40",
+      "status": "online",
+      "metadata": { "provider": "DigitalOcean SGP1", "os": "Ubuntu 22.04" }
+    },
+    {
+      "id": "hq-globe-wan",
+      "label": "HQ-Globe",
+      "type": "firewall",
+      "vlan": 110,
+      "ip": "120.28.138.55",
+      "status": "online",
+      "metadata": { "alias": "alaa@hq-globe", "role": "HQ WAN gateway" }
+    }
+  ],
+  "links": [
+    { "id": "l-globe-ccr", "source": "wan-globe", "target": "ccr1036", "label": "WAN uplink", "bandwidth": "100M", "status": "active" },
+    { "id": "l-pldt-ccr", "source": "wan-pldt", "target": "ccr1036", "label": "WAN backup", "bandwidth": "100M", "status": "active" },
+    { "id": "l-ccr-dgx1", "source": "ccr1036", "target": "dgx1", "label": "LAN 10G", "bandwidth": "10G", "status": "active" },
+    { "id": "l-ccr-sweep", "source": "ccr1036", "target": "sweep", "label": "Corp LAN", "bandwidth": "1G", "status": "active" },
+    { "id": "l-ccr-annex4", "source": "ccr1036", "target": "annex4", "label": "Site-to-site VPN", "bandwidth": "100M", "status": "active" },
+    { "id": "l-ccr-mce", "source": "ccr1036", "target": "mce-vps", "label": "WAN tunnel", "bandwidth": "1G", "status": "active" },
+    { "id": "l-ccr-wan-hq", "source": "ccr1036", "target": "hq-globe-wan", "label": "HQ WAN", "bandwidth": "100M", "status": "active" },
+    { "id": "l-dgx1-cf-voice", "source": "dgx1", "target": "cf-tunnel-voice", "label": "CF tunnel", "bandwidth": "1G", "status": "active" },
+    { "id": "l-dgx1-cf-hive", "source": "dgx1", "target": "cf-tunnel-hive", "label": "CF tunnel", "bandwidth": "1G", "status": "active" },
+    { "id": "l-ccr-lenovo", "source": "ccr1036", "target": "lenovo-pgx", "label": "incoming", "bandwidth": "10G", "status": "inactive" },
+    { "id": "l-ccr-dgx32", "source": "ccr1036", "target": "dgx-rack-32", "label": "incoming", "bandwidth": "10G", "status": "inactive" },
+    { "id": "l-ccr-dgx16", "source": "ccr1036", "target": "dgx-rack-16", "label": "incoming", "bandwidth": "10G", "status": "inactive" },
+    { "id": "l-ccr-asus", "source": "ccr1036", "target": "asus-gb10", "label": "incoming fleet", "bandwidth": "10G", "status": "inactive" }
+  ]
+}

@@ -1,0 +1,325 @@
+/*
+ * Machine Health Dashboard — CSS
+ * Supports CSS modules (dashboard-styles.module.css) or plain import.
+ * Uses CSS custom properties for Wave Terminal theming.
+ */
+
+:root {
+  --color-ok:       #22c55e;
+  --color-warning:  #eab308;
+  --color-critical: #ef4444;
+  --color-unknown:  #6b7280;
+  --color-bg:       #0f1117;
+  --color-bg2:      #1a1d27;
+  --color-bg3:      #22263a;
+  --color-border:   #2d3148;
+  --color-text:     #e2e8f0;
+  --color-text2:    #94a3b8;
+  --color-accent:   #38bdf8;
+  --font-mono:      "Cascadia Code", "JetBrains Mono", "Fira Code", monospace;
+  --radius:         8px;
+  --gap:            12px;
+}
+
+/* ── Dashboard container ─────────────────────────────────────── */
+
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  padding: 16px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+/* ── Top bar ─────────────────────────────────────────────────── */
+
+.topBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--color-bg2);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  flex: 1;
+}
+
+.summaryBadges {
+  display: flex;
+  gap: 6px;
+}
+
+.summaryBadges span {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.badgeOk   { background: rgba(34, 197, 94, 0.15);  color: var(--color-ok); }
+.badgeWarn { background: rgba(234, 179, 8, 0.15);   color: var(--color-warning); }
+.badgeCrit { background: rgba(239, 68, 68, 0.15);   color: var(--color-critical); }
+.badgeUnk  { background: rgba(107, 114, 128, 0.15); color: var(--color-unknown); }
+
+.refreshTime {
+  font-size: 11px;
+  color: var(--color-text2);
+}
+
+/* ── Error bar ───────────────────────────────────────────────── */
+
+.errorBar {
+  padding: 8px 12px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid var(--color-critical);
+  border-radius: var(--radius);
+  color: var(--color-critical);
+  font-size: 12px;
+}
+
+/* ── Tile grid ───────────────────────────────────────────────── */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--gap);
+}
+
+.empty {
+  color: var(--color-text2);
+  padding: 24px;
+  text-align: center;
+  grid-column: 1 / -1;
+}
+
+/* ── Machine tile ────────────────────────────────────────────── */
+
+.tile {
+  position: relative;
+  background: var(--color-bg2);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid transparent; /* overridden by status color */
+  border-radius: var(--radius);
+  padding: 12px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+  overflow: hidden;
+}
+
+.tile:hover {
+  background: var(--color-bg3);
+  transform: translateY(-1px);
+}
+
+.tileOffline {
+  opacity: 0.55;
+  pointer-events: auto;
+}
+
+/* ── Tile header ─────────────────────────────────────────────── */
+
+.tileHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.statusDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px currentColor;
+  transition: background-color 0.3s ease;
+}
+
+.machineName {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.machineType {
+  font-size: 10px;
+  color: var(--color-text2);
+  background: var(--color-bg3);
+  padding: 1px 5px;
+  border-radius: 3px;
+  letter-spacing: 0.05em;
+}
+
+/* ── Offline overlay ─────────────────────────────────────────── */
+
+.offlineOverlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 16px 0;
+  color: var(--color-critical);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.offlineDetail {
+  font-size: 11px;
+  color: var(--color-text2);
+  font-weight: 400;
+}
+
+/* ── Metric bars ─────────────────────────────────────────────── */
+
+.metric {
+  display: grid;
+  grid-template-columns: 36px 1fr 36px;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 5px;
+}
+
+.metricLabel {
+  font-size: 10px;
+  color: var(--color-text2);
+  text-align: right;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.barTrack {
+  height: 6px;
+  background: var(--color-bg3);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 3px;
+  min-width: 2px;
+}
+
+.metricValue {
+  font-size: 11px;
+  font-weight: 600;
+  text-align: right;
+  transition: color 0.3s ease;
+}
+
+/* ── Tile footer ─────────────────────────────────────────────── */
+
+.tileFooter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-border);
+}
+
+.badge {
+  font-size: 10px;
+  padding: 1px 6px;
+  background: var(--color-bg3);
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  color: var(--color-text2);
+  white-space: nowrap;
+}
+
+.uptime {
+  font-size: 10px;
+  color: var(--color-text2);
+  margin-left: auto;
+}
+
+/* ── Hover detail panel ─────────────────────────────────────── */
+
+.detailPanel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 17, 23, 0.95);
+  border-radius: var(--radius);
+  padding: 12px;
+  z-index: 10;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.15s ease;
+  overflow-y: auto;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.detailTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.detailTable td {
+  padding: 3px 4px;
+  vertical-align: top;
+}
+
+.detailTable td:first-child {
+  color: var(--color-text2);
+  width: 90px;
+  white-space: nowrap;
+}
+
+.detailTable td:last-child {
+  color: var(--color-text);
+  font-family: var(--font-mono);
+}
+
+.sshHint {
+  margin-top: 10px;
+  padding: 5px;
+  text-align: center;
+  font-size: 10px;
+  color: var(--color-accent);
+  border: 1px dashed var(--color-accent);
+  border-radius: 4px;
+  letter-spacing: 0.06em;
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 1200px) {
+  .grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}

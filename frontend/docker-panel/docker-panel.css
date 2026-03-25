@@ -1,0 +1,353 @@
+/* docker-panel.css — Docker Orchestration Panel for Wave Terminal */
+
+/* Root */
+.docker-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #0a0f1a;
+  color: #e2e8f0;
+  font-family: ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
+  font-size: 12px;
+  overflow: hidden;
+}
+
+/* ─── Toolbar ─── */
+.docker-panel__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #1e293b;
+  background: #0f172a;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+/* ─── Buttons / tabs ─── */
+.btn {
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #94a3b8;
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 11px;
+  font-family: inherit;
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
+}
+
+.btn:hover {
+  background: #334155;
+  color: #e2e8f0;
+}
+
+.btn--active {
+  background: #1e3a5f;
+  border-color: #06b6d4;
+  color: #06b6d4;
+}
+
+.btn--danger {
+  background: #7f1d1d;
+  border-color: #ef4444;
+  color: #fca5a5;
+}
+
+.btn--danger:hover {
+  background: #991b1b;
+}
+
+/* ─── Search input ─── */
+.docker-panel__search {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  padding: 4px 8px;
+  color: #e2e8f0;
+  font-size: 11px;
+  width: 180px;
+  outline: none;
+  font-family: inherit;
+}
+
+.docker-panel__search:focus {
+  border-color: #06b6d4;
+}
+
+/* ─── Error banner ─── */
+.docker-panel__error {
+  padding: 6px 12px;
+  background: #450a0a;
+  color: #fca5a5;
+  font-size: 11px;
+  border-bottom: 1px solid #7f1d1d;
+  flex-shrink: 0;
+}
+
+/* ─── Table ─── */
+.docker-panel__table-wrap {
+  flex: 1;
+  overflow: auto;
+}
+
+.docker-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.docker-table thead tr {
+  border-bottom: 1px solid #1e293b;
+  background: #0f172a;
+}
+
+.docker-table th {
+  padding: 6px 10px;
+  text-align: left;
+  font-weight: 500;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  color: #64748b;
+  cursor: pointer;
+  user-select: none;
+}
+
+.docker-table th:hover {
+  color: #94a3b8;
+}
+
+.docker-table th.sorted {
+  color: #06b6d4;
+  font-weight: 700;
+}
+
+.docker-table td {
+  padding: 7px 10px;
+  vertical-align: middle;
+  border-bottom: 1px solid #0f172a;
+}
+
+.docker-table tbody tr {
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.docker-table tbody tr:hover {
+  background: #1e293b;
+}
+
+.docker-table tbody tr.selected {
+  background: #1e3a5f;
+}
+
+/* ─── Status badge ─── */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.status-badge__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-badge__dot--running {
+  background: #22c55e;
+  box-shadow: 0 0 4px #22c55e;
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+.status-badge__dot--exited {
+  background: #6b7280;
+}
+
+.status-badge__dot--paused {
+  background: #f59e0b;
+}
+
+.status-badge__dot--dead {
+  background: #ef4444;
+}
+
+@keyframes status-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ─── Mini bars ─── */
+.mini-bar {
+  width: 48px;
+  height: 6px;
+  background: #1e293b;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.mini-bar__fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+/* ─── Action buttons ─── */
+.action-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.action-btn {
+  background: transparent;
+  border-radius: 3px;
+  padding: 2px 6px;
+  cursor: pointer;
+  font-size: 11px;
+  line-height: 1;
+  transition: background 0.1s;
+  font-family: inherit;
+}
+
+/* ─── Detail panel ─── */
+.docker-detail {
+  border-top: 1px solid #1e293b;
+  background: #0f172a;
+  padding: 12px 16px;
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px 16px;
+  font-size: 11px;
+  max-height: 160px;
+  overflow: auto;
+}
+
+.docker-detail__section-label {
+  color: #475569;
+  margin-bottom: 4px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ─── Log viewer ─── */
+.log-viewer {
+  position: fixed;
+  inset: 0;
+  background: #0a0f1a;
+  display: flex;
+  flex-direction: column;
+  z-index: 150;
+  font-family: ui-monospace, 'Cascadia Code', monospace;
+}
+
+.log-viewer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid #1e293b;
+  background: #0f172a;
+  flex-shrink: 0;
+}
+
+.log-viewer__body {
+  flex: 1;
+  overflow: auto;
+  padding: 8px 16px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #e2e8f0;
+}
+
+.log-viewer__line {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* ANSI color classes (generated by ansi-to-html) */
+.log-viewer__body span[style*="color"] {
+  font-family: inherit;
+}
+
+/* ─── Confirm dialog ─── */
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  backdrop-filter: blur(2px);
+}
+
+.confirm-dialog {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 24px 32px;
+  max-width: 380px;
+  color: #e2e8f0;
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+}
+
+.confirm-dialog__message {
+  margin-bottom: 20px;
+  color: #f8fafc;
+  line-height: 1.5;
+}
+
+.confirm-dialog__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* ─── Loading state ─── */
+.docker-panel__loading {
+  padding: 24px;
+  color: #475569;
+  font-size: 13px;
+}
+
+/* ─── Scrollbar styling (webkit) ─── */
+.docker-panel ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.docker-panel ::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+.docker-panel ::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 3px;
+}
+
+.docker-panel ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* ─── Host status dot ─── */
+.host-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.host-dot--up { background: #22c55e; }
+.host-dot--down { background: #ef4444; }

@@ -1,0 +1,42 @@
+{
+  "pollIntervalSeconds": 15,
+  "sshTimeoutSeconds": 10,
+  "machines": [
+    {
+      "name": "Sweep",
+      "host": "localhost",
+      "port": 0,
+      "user": "Kratos",
+      "type": "windows",
+      "keyPath": "",
+      "comment": "localhost — polled via exec.Command(powershell), no SSH"
+    },
+    {
+      "name": "DGX1-V100",
+      "host": "120.28.138.55",
+      "port": 2442,
+      "user": "phenix",
+      "type": "linux",
+      "keyPath": "~/.ssh/id_ed25519",
+      "comment": "8x V100 GPU, Docker. Internal path: 10.10.101.13:2222"
+    },
+    {
+      "name": "Annex-4",
+      "host": "10.1.1.1",
+      "port": 2222,
+      "user": "alaa",
+      "type": "mikrotik",
+      "keyPath": "~/.ssh/id_ed25519_alaa",
+      "comment": "MikroTik RouterOS — Annex-4 mobile router"
+    },
+    {
+      "name": "CCR1036-HQ",
+      "host": "10.10.101.1",
+      "port": 2222,
+      "user": "alaa",
+      "type": "mikrotik",
+      "keyPath": "~/.ssh/id_ed25519_alaa",
+      "comment": "MikroTik CCR1036 — Makati HQ main router"
+    }
+  ]
+}
