@@ -94,11 +94,11 @@ Add these to your `widgets.json` (usually `~/.config/waveterm/widgets.json`):
     "meta": {
       "view": "term",
       "controller": "cmd",
-      "cmd": "D:/Dev/waveterm-apps/bin/wt-dashboard.exe",
+      "cmd": "D:/Dev/terminolgy-apps/bin/wt-dashboard.exe",
       "cmd:shell": false,
       "cmd:runonstart": true,
       "cmd:persistent": true,
-      "cmd:cwd": "D:/Dev/waveterm-apps"
+      "cmd:cwd": "D:/Dev/terminolgy-apps"
     }
   }
 },
